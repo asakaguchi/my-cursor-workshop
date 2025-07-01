@@ -31,5 +31,19 @@ if st.button("登録する"):
 st.header("商品の情報検索")
 product_id = st.number_input("商品ID", min_value=1, step=1)
 if st.button("検索する"):
-    # TODO: API連携を実装
-    st.info(f"（開発中）商品ID: {product_id} を検索します。")
+    try:
+        response = httpx.get(f"{API_BASE_URL}/items/{product_id}", timeout=5)
+        response.raise_for_status()
+        product = response.json()
+        st.subheader("検索結果")
+        st.write(f"**ID:** {product['id']}")
+        st.write(f"**商品名:** {product['name']}")
+        st.write(f"**価格:** {product['price']} 円")
+        st.write(f"**登録日時:** {product['created_at']}")
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            st.error(f"商品ID {product_id} は見つかりませんでした。")
+        else:
+            st.error(f"APIエラー: {e.response.status_code} - {e.response.text}")
+    except httpx.RequestError as e:
+        st.error(f"リクエストエラー: {e}")
